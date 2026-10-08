@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Message, Settings } from '../types';
+import { Message, AISettings } from '../types';
 
 interface ChatPageProps {
-  settings: Settings;
+  aiName: string;
+  userName: string;
+  aiSettings: AISettings;
   messages: Message[];
   onSendMessage: (text: string) => void;
   onBack: () => void;
 }
 
-export default function ChatPage({ settings, messages, onSendMessage, onBack }: ChatPageProps) {
-  // eslint-disable-next-line
+export default function ChatPage({ aiName, userName, aiSettings, messages, onSendMessage, onBack }: ChatPageProps) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -35,8 +36,6 @@ export default function ChatPage({ settings, messages, onSendMessage, onBack }: 
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
 
-
-
   return (
     <div className="flex flex-col h-full bg-gray-100">
       {/* Header */}
@@ -46,7 +45,7 @@ export default function ChatPage({ settings, messages, onSendMessage, onBack }: 
           🤖
         </div>
         <div>
-          <h2 className="font-bold text-lg">{settings.aiName || 'Заботушка'}</h2>
+          <h2 className="font-bold text-lg">{aiName}</h2>
           <p className="text-xs text-blue-200">в сети</p>
         </div>
       </div>
@@ -56,7 +55,7 @@ export default function ChatPage({ settings, messages, onSendMessage, onBack }: 
         {messages.length === 0 && (
           <div className="text-center text-gray-400 mt-10">
             <p className="text-4xl mb-3">💬</p>
-            <p className="text-lg">Напишите {settings.aiName || 'Заботушке'}!</p>
+            <p className="text-lg">Напишите {aiName}!</p>
             <p className="text-sm">Она поможет с таблетками и здоровьем</p>
           </div>
         )}
@@ -104,5 +103,3 @@ export default function ChatPage({ settings, messages, onSendMessage, onBack }: 
     </div>
   );
 }
-
-

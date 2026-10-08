@@ -1,9 +1,9 @@
-import { Settings } from '../types';
+import { AISettings } from '../types';
 
-export function getAIResponse(userMessage: string, settings: Settings): string {
+export function getAIResponse(userMessage: string, userName: string, aiSettings: AISettings): string {
   const lowerMsg = userMessage.toLowerCase();
-  const name = settings.userName || 'друг';
-  const aiName = settings.aiName || 'Заботушка';
+  const name = userName || 'друг';
+  const aiName = aiSettings.aiName || 'Заботушка';
 
   if (lowerMsg.includes('привет') || lowerMsg.includes('здравствуй') || lowerMsg.includes('добрый')) {
     return `Здравствуйте, ${name}! Рада вас видеть! Как ваше самочувствие сегодня? 😊`;
@@ -27,10 +27,13 @@ export function getAIResponse(userMessage: string, settings: Settings): string {
     return `${name}, если вам плохо, пожалуйста, позвоните врачу или близким. Сядьте удобно, не делайте резких движений. Я рядом с вами 🤗`;
   }
   if (lowerMsg.includes('память') || lowerMsg.includes('запис') || lowerMsg.includes('истори')) {
-    return `Я запоминаю все ваши показатели давления и приёма таблеток. Данные отправляются на указанный номер для ваших близких 📊`;
+    return `Я запоминаю все ваши показатели давления и приёма таблеток. Данные сохраняются в вашем аккаунте 📊`;
   }
   if (lowerMsg.includes('пока') || lowerMsg.includes('до свидания')) {
     return `До свидания, ${name}! Берегите себя и не забывайте о таблетках. Я всегда на связи! 👋`;
+  }
+  if (lowerMsg.includes('контакт') || lowerMsg.includes('друг') || lowerMsg.includes('написа')) {
+    return `${name}, вы можете общаться с другими пользователями в разделе "Контакты"! Добавьте близких и пишите им 📱`;
   }
 
   const responses = [
