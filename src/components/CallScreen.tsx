@@ -1,31 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, MemoryEntry } from '../types';
+import { AISettings, AIMemoryEntry } from '../types';
 
 interface CallScreenProps {
-  settings: Settings;
-  onCallEnd: (memoryEntry?: MemoryEntry) => void;
+  userName: string;
+  aiSettings: AISettings;
+  onCallEnd: (memoryEntry?: AIMemoryEntry) => void;
   onBack: () => void;
 }
 
-type CallPhase = 'ringing' | 'greeting' | 'ask_pressure' | 'wait_pressure' | 'ask_meds' | 'closing' | 'ended';
+type CallPhase = 'ringing' | 'greeting' | 'ask_pressure' | 'wait_pressure' | 'closing' | 'ended';
 
-export default function CallScreen({ settings, onCallEnd, onBack }: CallScreenProps) {
+export default function CallScreen({ userName, aiSettings, onCallEnd, onBack }: CallScreenProps) {
   const [phase, setPhase] = useState<CallPhase>('ringing');
   const [callDuration, setCallDuration] = useState(0);
-  const [currentMessage, setCurrentMessage] = useState('');
   const [userInput, setUserInput] = useState('');
   const [pressure, setPressure] = useState('');
   const [messages, setMessages] = useState<{text: string; isAI: boolean}[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
-  const name = settings.userName || 'дорогой друг';
-  const aiName = settings.aiName || 'Заботушка';
+  const name = userName || 'дорогой друг';
+  const aiName = aiSettings.aiName || 'Заботушка';
 
   useEffect(() => {
-    // Ringing phase
     const ringTimer = setTimeout(() => {
       setPhase('greeting');
-      const greeting = `Здравствуйте, ${name}! Это ${aiName}, ваш помощник. Как вы себя сегодня чувствуете?`;
-      setCurrentMessage(greeting);
+      const greeting = `${aiSettings.greeting
+        .replace('{name}', name)
+        .replace('{aiName}', aiName)} Как вы себя сегодня чувствуете?`;
       setMessages([{ text: greeting, isAI: true }]);
       speak(greeting);
     }, 3000);
@@ -48,8 +48,8 @@ export default function CallScreen({ settings, onCallEnd, onBack }: CallScreenPr
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ru-RU';
-      utterance.rate = 0.85;
-      utterance.pitch = 1.1;
+      utterance.rate = aiSettings.aiSpeed;
+      utterance.pitch = aiSettings.aiVoice === 'female' ? 1.1 : 0.9;
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -70,7 +70,6 @@ export default function CallScreen({ settings, onCallEnd, onBack }: CallScreenPr
     if (phase === 'greeting') {
       setTimeout(() => {
         const askPressure = `${name}, это хорошо! А не могли бы вы сейчас измерить давление? Пожалуйста, назовите мне результаты — верхнее и нижнее давление.`;
-        setCurrentMessage(askPressure);
         setMessages(prev => [...prev, { text: askPressure, isAI: true }]);
         speak(askPressure);
         setPhase('wait_pressure');
@@ -79,27 +78,16 @@ export default function CallScreen({ settings, onCallEnd, onBack }: CallScreenPr
       setPressure(userMsg);
       setTimeout(() => {
         const confirmPressure = `Спасибо, ${name}! Давление ${userMsg} записано. Теперь, пожалуйста, не забудьте принять ваши таблетки по расписанию. Это очень важно для здоровья!`;
-        setCurrentMessage(confirmPressure);
         setMessages(prev => [...prev, { text: confirmPressure, isAI: true }]);
         speak(confirmPressure);
-        setPhase('closing');
         
         setTimeout(() => {
           const closing = `Хорошо, ${name}. Я записала всё в память. Берегите себя! До свидания!`;
-          setCurrentMessage(closing);
           setMessages(prev => [...prev, { text: closing, isAI: true }]);
           speak(closing);
           setPhase('ended');
         }, 5000);
       }, 1500);
-    } else if (phase === 'ask_meds') {
-      setTimeout(() => {
-        const closing = `Отлично, ${name}! Я записала всё. Берегите себя и не забывайте о здоровье! До свидания!`;
-        setCurrentMessage(closing);
-        setMessages(prev => [...prev, { text: closing, isAI: true }]);
-        speak(closing);
-        setPhase('ended');
-      }, 1000);
     }
   };
 
@@ -107,7 +95,7 @@ export default function CallScreen({ settings, onCallEnd, onBack }: CallScreenPr
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
-    const entry: MemoryEntry = {
+    const entry: AIMemoryEntry = {
       date: new Date().toLocaleDateString('ru-RU'),
       pressure: pressure || 'не измерено',
       medications: phase === 'ended' ? 'приняты' : 'не подтверждено',
@@ -147,7 +135,7 @@ export default function CallScreen({ settings, onCallEnd, onBack }: CallScreenPr
 
       {/* Input Area */}
       <div className="p-4 bg-black/20 backdrop-blur-sm">
-        {(phase === 'wait_pressure' || phase === 'greeting' || phase === 'ask_meds') && (
+        {(phase === 'wait_pressure' || phase === 'greeting') && (
           <div className="flex gap-2 mb-3">
             <input
               type="text"
@@ -170,7 +158,6 @@ export default function CallScreen({ settings, onCallEnd, onBack }: CallScreenPr
           </div>
         )}
         
-        {/* End Call Button */}
         <button
           onClick={handleEndCall}
           className="w-full p-4 bg-red-500 hover:bg-red-600 rounded-full text-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all"
